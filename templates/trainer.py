@@ -1,5 +1,6 @@
 import tensorflow as tf
 from linear_regression_model import Regressor
+# from fcn_regression_model import Regressor
 from data_linear import data_generator_linear, batch_generator
 
 
@@ -13,6 +14,8 @@ def train(session, model, data_generator, training_steps, logdir='./logfiles/lin
     :param logdir: The folder in which summary logs are stored.
     """
     summary_writer = tf.summary.FileWriter(logdir=logdir)
+    summary_writer.add_graph(graph=tf.get_default_graph())  # write meta graph to logfile
+
     for n, data in enumerate(data_generator):
         if n % 100 == 0:
             print('Training step: %d' % n)
@@ -21,7 +24,7 @@ def train(session, model, data_generator, training_steps, logdir='./logfiles/lin
         if n >= training_steps:
             break
 
-        feed_dict = {model.x: data[:, 0], model.target: data[:, 1]}
+        feed_dict = {model.x: data[:, :1], model.target: data[:, 1:]}
         _, summary = session.run(fetches=[model.train_op, model.summary_train],
                                  feed_dict=feed_dict)
 
@@ -50,7 +53,8 @@ def start_training(logdir, training_steps=1000, batch_size=10):
 
 
 if __name__ == '__main__':
-    logdir = './logfiles/linear_reg'
+    logdir = './logfiles/linear_reg_1'
+    # logdir = './logfiles/fcn_reg_2'
     training_steps = 1000
     batch_size = 10
 

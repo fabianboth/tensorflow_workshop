@@ -12,24 +12,26 @@ class Regressor(object):
 
     def build_graph(self):
         """ In this method everything within up to the output logits is constructed. """
-        with tf.variable_scope('LinearRegression'):
+        with tf.variable_scope('FcnRegression'):
             # define placeholders
             x = tf.placeholder(dtype=tf.float32, shape=[None, 1], name='x_input')
             target = tf.placeholder(dtype=tf.float32, shape=[None, 1], name='target')
 
             # ---- construct regression relation
-            # Variable a is the first (and only) coefficient
-            a = tf.get_variable(name='a', shape=[1], initializer=tf.constant_initializer)
-            # Variable b is the bias
-            b = tf.get_variable(name='b', shape=[1], initializer=tf.constant_initializer)
+            # First layer with 1 input and 10 outputs (10 neurons)
+            w1 = tf.get_variable(name='w1', shape=[1, 10], initializer=tf.truncated_normal_initializer)
+            b1 = tf.get_variable(name='b1', shape=[1], initializer=tf.constant_initializer)
+            layer = tf.matmul(x, w1) + b1
+            layer = tf.nn.elu(layer, name='layer_1')
 
-            y = tf.multiply(x, a) + b  # basic operators are also available (+, *, ...)
+            # Second layer with 10 inputs and 1 output (1 neuron)
+            w2 = tf.get_variable(name='w2', shape=[10, 1], initializer=tf.truncated_normal_initializer)
+            b2 = tf.get_variable(name='b2', shape=[1], initializer=tf.constant_initializer)
+            y = tf.matmul(layer, w2) + b2  # output y
 
             # store internal variables (alternatively also an internal dict can be used)
             self.x = x
             self.target = target
-            self.a = a
-            self.b = b
             self.y = y
 
     def construct_optimizer(self, y, target, learning_rate=0.001):
@@ -58,8 +60,6 @@ class Regressor(object):
             summary = list()
 
             summary.append(tf.summary.scalar(tensor=self.loss, name='loss'))
-            summary.append(tf.summary.scalar(tensor=tf.reduce_mean(self.a), name='a'))
-            summary.append(tf.summary.scalar(tensor=tf.reduce_mean(self.b), name='b'))
 
             # fuse all summaries in a single operation
             summary_train = tf.summary.merge(inputs=summary)
